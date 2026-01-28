@@ -26,7 +26,7 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git checkout --orphan release
           mkdir -p /tmp/ruleset
-          cp -r ./output/. /tmp/ruleset/
+          cp -r .output/. /tmp/ruleset/
           git rm -rf .
           cp -r /tmp/ruleset/. .
           git add .
