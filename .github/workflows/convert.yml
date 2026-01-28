@@ -25,10 +25,9 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git checkout --orphan release
-          mkdir -p /tmp/ruleset
-          cp -r .output/. /tmp/ruleset/
           git rm -rf .
-          cp -r /tmp/ruleset/. .
+          cp -r .output/* .
+          rm -rf .output
           git add .
           git commit -m "Auto-update ruleset"
           git push -f origin release
