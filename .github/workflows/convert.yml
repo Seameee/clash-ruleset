@@ -1,0 +1,34 @@
+name: Convert Ruleset to MRS
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v4
+
+      - name: Run conversion script
+        run: |
+          chmod +x ./scripts/convert.sh
+          ./scripts/convert.sh
+
+      - name: Push ruleset to release branch orphan
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan release
+          mkdir -p /tmp/ruleset
+          cp -r ./output/. /tmp/ruleset/
+          git rm -rf .
+          cp -r /tmp/ruleset/. .
+          git add .
+          git commit -m "Auto-update ruleset"
+          git push -f origin release

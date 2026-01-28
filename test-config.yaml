@@ -1,0 +1,12 @@
+log-level: info
+mode: rule
+rule-providers:
+  test-rule:
+    type: file
+    behavior: domain  # 如果测试IP规则，改成 ipcidr
+    format: mrs
+    path: ./output/domainset/apple_cdn.mrs # 指向你想测试的文件
+
+rules:
+  - RULE-SET,test-rule,REJECT
+  - MATCH,DIRECT
