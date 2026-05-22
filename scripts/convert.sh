@@ -89,8 +89,8 @@ for i in "${!TARGET_FOLDERS[@]}"; do
             # 只保留有效的 CIDR 格式行（IPv4/IPv6）
             cleaned=$(echo "$cleaned" | grep -E '^[0-9a-fA-F:.]+/[0-9]+$' || true)
         elif [ "$RULE_TYPE" = "domain" ]; then
-            # 过滤掉不含字母的非域名行（如分隔符 ##################）
-            cleaned=$(echo "$cleaned" | grep '[a-zA-Z]' || true)
+            # 过滤掉不含点的非域名行（如分隔符 ##################），域名规则一定包含点
+            cleaned=$(echo "$cleaned" | grep '\.' || true)
         fi
 
         # 为 domainset/download.txt 追加额外规则
@@ -99,19 +99,21 @@ for i in "${!TARGET_FOLDERS[@]}"; do
             cleaned=$(echo "$cleaned" && echo "+.download.amd.com" && echo "+.drivers.amd.com" && echo "+.now61.com" && echo "+.now61.cn" && echo "api-proxy.de" && echo "+.infini-cloud.net")
         fi
 
-        echo "$cleaned" > "$clean_file"
+        # 将清理后的内容写回输出的 .txt（对 download.txt 会包含追加的规则）
+        printf '%s\n' "$cleaned" > "$out_dir/$filename"
 
-        if [ -s "$clean_file" ]; then
+        # 只有非空才生成 .mrs；echo 空变量会产生换行符导致 [ -s ] 误判，所以直接检查变量
+        if [ -n "$cleaned" ]; then
             echo "Converting $filename to $name.mrs"
 
             # mihomo convert-ruleset <behavior> <format> <source file> <target file>
-            if "$MIHOMO_BIN" convert-ruleset "$RULE_TYPE" "text" "$clean_file" "$out_dir/$name.mrs"; then
+            if "$MIHOMO_BIN" convert-ruleset "$RULE_TYPE" "text" "$out_dir/$filename" "$out_dir/$name.mrs"; then
                 echo "Successfully converted $filename"
             else
                 echo "Failed to convert $filename"
             fi
         else
-            echo "Cleaned file $clean_file is empty, skipping conversion."
+            echo "Cleaned file $filename is empty, skipping conversion."
         fi
     done
     shopt -u nullglob
