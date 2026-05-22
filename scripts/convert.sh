@@ -83,9 +83,15 @@ for i in "${!TARGET_FOLDERS[@]}"; do
 
         # 根据规则类型进行额外处理
         if [ "$RULE_TYPE" = "ipcidr" ]; then
-            # 对于 IP 规则，需要去除 IP-CIDR, / IP-CIDR6, 前缀和 ,no-resolve 等后缀
-            # 只保留纯 IP/CIDR 段
-            cleaned=$(echo "$cleaned" | sed 's/^IP-CIDR6\?\s*,\s*//g' | sed 's/\s*,no-resolve$//g')
+            # 对于 IP 规则，需要去除 IP-CIDR, / IP-CIDR6, / IP-ASN, 前缀和 ,no-resolve 等后缀
+            # 只保留纯 IP/CIDR 段，同时过滤掉纯数字的 ASN 行
+            cleaned=$(echo "$cleaned" | sed 's/^IP-\(CIDR6\?\|ASN\)\s*,\s*//g' | sed 's/\s*,no-resolve$//g' | grep -v '^[0-9]\+$')
+        fi
+
+        # 为 domainset/download.txt 追加额外规则
+        if [ "$filename" = "download.txt" ] && [ "$RULE_TYPE" = "domain" ]; then
+            echo "Appending extra rules to $filename"
+            cleaned=$(echo "$cleaned" && echo "+.download.amd.com" && echo "+.drivers.amd.com" && echo "+.now61.com" && echo "+.now61.cn" && echo "api-proxy.de" && echo "+.infini-cloud.net")
         fi
 
         echo "$cleaned" > "$clean_file"
