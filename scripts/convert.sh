@@ -8,7 +8,11 @@ TEMP_DIR="$WORKDIR/temp"
 MIHOMO_BIN="$TEMP_DIR/mihomo"
 OUTPUT_ROOT="$WORKDIR/.output"
 SRC_ROOT="$TEMP_DIR/ruleset.skk.moe/Clash"
-TARGET_FOLDERS=("domainset")
+
+# 定义需要转换的文件夹及其对应的规则类型
+# domainset -> domain, ip -> ipcidr
+TARGET_FOLDERS=("domainset" "ip")
+RULE_TYPES=("domain" "ipcidr")
 
 # 创建临时目录
 mkdir -p "$TEMP_DIR"
@@ -53,7 +57,9 @@ cp -r "$SRC_ROOT/." "$OUTPUT_ROOT"
 # 3. 转换规则
 echo "Converting rules..."
 
-for folder in "${TARGET_FOLDERS[@]}"; do
+for i in "${!TARGET_FOLDERS[@]}"; do
+    folder="${TARGET_FOLDERS[$i]}"
+    RULE_TYPE="${RULE_TYPES[$i]}"
     src_dir="$SRC_ROOT/$folder"
     out_dir="$OUTPUT_ROOT/$folder"
 
@@ -61,9 +67,6 @@ for folder in "${TARGET_FOLDERS[@]}"; do
         echo "Source directory $src_dir does not exist, skipping..."
         continue
     fi
-
-    # 确定规则类型
-    RULE_TYPE="domain"
 
     echo "Processing directory: $folder (Type: $RULE_TYPE)"
 
@@ -75,7 +78,17 @@ for folder in "${TARGET_FOLDERS[@]}"; do
 
         clean_file="${file}.clean"
 
-        grep -v "ruleset.skk.moe" "$file" | grep -v "^\s*#" | sed '/^\s*$/d' | sed 's/[[:space:]]*$//' >"$clean_file"
+        # 基础清理：去除注释、空行、尾部空格，以及包含 ruleset.skk.moe 的标记行
+        cleaned=$(grep -v "ruleset.skk.moe" "$file" | grep -v "^\s*#" | sed '/^\s*$/d' | sed 's/[[:space:]]*$//')
+
+        # 根据规则类型进行额外处理
+        if [ "$RULE_TYPE" = "ipcidr" ]; then
+            # 对于 IP 规则，需要去除 IP-CIDR, / IP-CIDR6, 前缀和 ,no-resolve 等后缀
+            # 只保留纯 IP/CIDR 段
+            cleaned=$(echo "$cleaned" | sed 's/^IP-CIDR6\?\s*,\s*//g' | sed 's/\s*,no-resolve$//g')
+        fi
+
+        echo "$cleaned" > "$clean_file"
 
         if [ -s "$clean_file" ]; then
             echo "Converting $filename to $name.mrs"
