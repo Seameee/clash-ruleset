@@ -96,7 +96,7 @@ for i in "${!TARGET_FOLDERS[@]}"; do
         # 为 domainset/download.txt 追加额外规则
         if [ "$filename" = "download.txt" ] && [ "$RULE_TYPE" = "domain" ]; then
             echo "Appending extra rules to $filename"
-            cleaned=$(echo "$cleaned" && echo "+.download.amd.com" && echo "+.drivers.amd.com" && echo "+.now61.com" && echo "+.now61.cn" && echo "api-proxy.de" && echo "+.infini-cloud.net")
+            cleaned=$(echo "$cleaned" && echo "+.download.amd.com" && echo "+.drivers.amd.com" && echo "+.now61.com" && echo "+.now61.cn" && echo "api-proxy.de" && echo "+.infini-cloud.net" && echo "+.mediafire.com")
         fi
 
         # 将清理后的内容写回输出的 .txt（对 download.txt 会包含追加的规则）
